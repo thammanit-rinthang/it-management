@@ -1,0 +1,78 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET() {
+  try {
+    const entries = await prisma.equipmentEntryList.findMany({
+      include: {
+        purchaseOrder: true,
+        equipmentLists: true,
+      },
+    });
+    return NextResponse.json(entries);
+  } catch (error) {
+    console.error("GET /api/equipment-entry-lists error:", error);
+    return NextResponse.json({ error: "Failed to fetch equipment entry lists" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+      const { 
+      purchase_id, 
+      list, 
+      brand_name, 
+      quantity, 
+      unit, 
+      recipient, 
+      date_received,
+      item_type 
+    } = body;
+
+    if (!purchase_id) {
+      return NextResponse.json({ error: "purchase_id is required" }, { status: 400 });
+    }
+
+    const entry = await prisma.$transaction(async (tx) => {
+      const newEntry = await tx.equipmentEntryList.create({
+        data: {
+          purchase_id,
+          list,
+          brand_name,
+          quantity: quantity || 0,
+          unit,
+          recipient,
+          item_type: item_type || "MAIN",
+          date_received: date_received ? new Date(date_received) : null,
+        },
+        include: {
+          purchaseOrder: true,
+        },
+      });
+
+      // Automatically create inventory record
+      await tx.equipmentList.create({
+        data: {
+          equipment_entry_id: newEntry.id,
+          payout_amount: 0,
+          remaining: newEntry.quantity,
+          status: "In Stock",
+        },
+      });
+
+      // Automatically update Purchase Order status
+      await tx.equipmentPurchaseOrder.update({
+        where: { id: purchase_id },
+        data: { status: "RECEIVED" },
+      });
+
+      return newEntry;
+    });
+
+    return NextResponse.json(entry, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/equipment-entry-lists error:", error);
+    return NextResponse.json({ error: "Failed to create equipment entry list" }, { status: 500 });
+  }
+}

@@ -1,15 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8F9FA;
+  --foreground: #212529;
+  --primary: #0F1059;
+  --secondary: #E9ECEF;
+  --accent: #ADB5BD;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-bai-jamjuree), ui-sans-serif, system-ui;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +27,39 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-bai-jamjuree), sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  letter-spacing: 0em;
+}
+
+/* ── Tame uppercase letter-spacing globally ───────────────────── */
+.uppercase {
+  letter-spacing: 0.04em;
+}
+
+/* ── Consistent small-label utility ──────────────────────────── */
+.ui-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #E9ECEF;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ADB5BD;
 }

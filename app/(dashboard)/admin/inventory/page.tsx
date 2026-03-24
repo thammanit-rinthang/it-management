@@ -1,0 +1,515 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Search, Loader2, Package, Plus, Edit2, Trash2, Box, BarChart3, Clock, Image as ImageIcon, ChevronUp, ChevronDown, FileSpreadsheet } from "lucide-react";
+import { 
+  Table, 
+  TableHeader, 
+  TableBody, 
+  TableHead, 
+  TableRow, 
+  TableCell 
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { exportToExcel } from "@/lib/export-utils";
+
+ interface InventoryItem {
+  id: string;
+  equipment_entry_id: string;
+  payout_amount: number;
+  remaining: number;
+  status: string;
+  equipmentEntry?: {
+    item_name: string;
+    item_type: string;
+    brand_name?: string;
+    unit?: string;
+    date_received?: string;
+    purchaseOrder?: {
+      po_number: string;
+      picture?: string;
+      list?: string;
+      detail?: string;
+    }
+  }
+}
+
+export default function InventoryPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Filters & Sorting logic states
+  const [filterStatus, setFilterStatus] = useState("ALL");
+  const [filterCategory, setFilterCategory] = useState("ALL");
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({
+    key: 'item_name',
+    direction: 'asc'
+  });
+
+  // Export states
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportDateStart, setExportDateStart] = useState("");
+  const [exportDateEnd, setExportDateEnd] = useState("");
+
+  // Form
+  const [formData, setFormData] = useState({
+    remaining: 0,
+    status: "AVAILABLE",
+    payout_amount: 0
+  });
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/equipment-lists");
+      const data = await res.json();
+      if (Array.isArray(data)) setInventory(data);
+    } catch (error) {
+      console.error("Fetch error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredInventory = inventory
+    .filter(item => {
+      const searchTerm = search.toLowerCase();
+      const itemName = (item.equipmentEntry?.item_name || "").toLowerCase();
+      const brand = (item.equipmentEntry?.brand_name || "").toLowerCase();
+      const poNumber = (item.equipmentEntry?.purchaseOrder?.po_number || "").toLowerCase();
+      
+      const matchesSearch = itemName.includes(searchTerm) || brand.includes(searchTerm) || poNumber.includes(searchTerm);
+      const matchesStatus = filterStatus === "ALL" || item.status === filterStatus;
+      const matchesCategory = filterCategory === "ALL" || item.equipmentEntry?.item_type === filterCategory;
+      
+      return matchesSearch && matchesStatus && matchesCategory;
+    })
+    .sort((a, b) => {
+      let aValue: any = "";
+      let bValue: any = "";
+
+      if (sortConfig.key === 'item_name') {
+        aValue = a.equipmentEntry?.item_name || "";
+        bValue = b.equipmentEntry?.item_name || "";
+      } else if (sortConfig.key === 'remaining') {
+        aValue = a.remaining || 0;
+        bValue = b.remaining || 0;
+      } else if (sortConfig.key === 'item_type') {
+        aValue = a.equipmentEntry?.item_type || "";
+        bValue = b.equipmentEntry?.item_type || "";
+      }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  const handleExportExcel = () => {
+    setIsExportModalOpen(true);
+  };
+
+  const processExport = async () => {
+    let dataToExport = filteredInventory;
+
+    // Apply date range filter based on date_received
+    if (exportDateStart || exportDateEnd) {
+      dataToExport = dataToExport.filter(item => {
+        const receivedDate = item.equipmentEntry?.date_received ? new Date(item.equipmentEntry.date_received) : null;
+        if (!receivedDate) return false;
+
+        const start = exportDateStart ? new Date(exportDateStart) : null;
+        const end = exportDateEnd ? new Date(exportDateEnd) : null;
+        
+        if (start && receivedDate < start) return false;
+        if (end) {
+          const endAdjusted = new Date(end);
+          endAdjusted.setHours(23, 59, 59);
+          if (receivedDate > endAdjusted) return false;
+        }
+        return true;
+      });
+    }
+
+    if (dataToExport.length === 0) {
+      alert("No data to export for the selected criteria.");
+      return;
+    }
+
+    const worksheetData = dataToExport.map(item => ({
+      "Asset Name": item.equipmentEntry?.item_name,
+      "Brand": item.equipmentEntry?.brand_name,
+      "Type": item.equipmentEntry?.item_type,
+      "PO Number": item.equipmentEntry?.purchaseOrder?.po_number,
+      "Remaining": item.remaining,
+      "Unit": item.equipmentEntry?.unit,
+      "Issued": item.payout_amount,
+      "Status": item.status,
+      "Received Date": item.equipmentEntry?.date_received ? new Date(item.equipmentEntry.date_received).toLocaleDateString('en-GB') : '-'
+    }));
+
+    await exportToExcel(worksheetData, `Inventory_Stock_${new Date().toISOString().split('T')[0]}`, "Stock");
+    setIsExportModalOpen(false);
+  };
+
+  const openModal = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setFormData({
+      remaining: item.remaining || 0,
+      status: item.status || "AVAILABLE",
+      payout_amount: item.payout_amount || 0
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedItem) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/equipment-lists/${selectedItem.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      if (res.ok) {
+        setIsModalOpen(false);
+        fetchInventory();
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this inventory record?")) return;
+    try {
+      const res = await fetch(`/api/equipment-lists/${id}`, { method: "DELETE" });
+      if (res.ok) fetchInventory();
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
+  return (
+    <div className="p-4 sm:p-6 space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-zinc-900 tracking-tight uppercase flex items-center gap-3">
+             <div className="h-10 w-10 rounded-2xl bg-[#0F1059] flex items-center justify-center text-white shadow-sm">
+                <Box className="h-5 w-5" />
+             </div>
+             สต็อกอุปกรณ์ / Inventory Control
+          </h1>
+          <p className="text-sm font-medium text-zinc-500 uppercase tracking-widest mt-1">การบริหารจัดเก็บและติดตามสถานะอุปกรณ์ / Advanced Warehouse & Stock Traceability</p>
+        </div>
+        <Button 
+             onClick={() => handleExportExcel()} 
+             variant="outline"
+             className="rounded-2xl border-zinc-200 hover:border-[#0F1059] hover:text-[#0F1059] py-6 px-6 font-black uppercase tracking-widest text-[11px] transition-all"
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" /> ส่งออก EXPORT
+          </Button>
+      </header>
+
+      {/* Filter Bar */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center p-4 rounded-3xl border border-zinc-100 bg-white/50">
+        <div className="flex items-center gap-3 px-4 py-2 bg-zinc-50 rounded-2xl border border-zinc-100 group focus-within:border-[#0F1059]/30 transition-all col-span-1 lg:col-span-2">
+             <Search className="h-4 w-4 text-zinc-400 group-focus-within:text-[#0F1059]" />
+             <input 
+                className="bg-transparent border-none outline-none text-sm font-medium w-full"
+                placeholder="Search by equipment, brand, or PO..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+             />
+        </div>
+        
+        <select 
+          className="bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-2.5 text-xs font-black uppercase outline-none text-zinc-600 focus:border-[#0F1059]/30"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value="ALL">All Status / สถานะทั้งหมด</option>
+          <option value="AVAILABLE">AVAILABLE / พร้อมใช้</option>
+          <option value="LOW_STOCK">LOW STOCK / ใกล้หมด</option>
+          <option value="OUT_OF_STOCK">OUT OF STOCK / หมด</option>
+          <option value="MAINTENANCE">MAINTENANCE / ส่งซ่อม</option>
+        </select>
+
+        <select 
+          className="bg-zinc-50 border border-zinc-100 rounded-2xl px-4 py-2.5 text-xs font-black uppercase outline-none text-zinc-600 focus:border-[#0F1059]/30"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          <option value="ALL">All Categories / หมวดหมู่ทั้งหมด</option>
+          <option value="Software">Software</option>
+          <option value="Hardware">Hardware</option>
+          <option value="Network">Network</option>
+          <option value="Printer">Printer</option>
+          <option value="Mobile">Mobile</option>
+        </select>
+      </div>
+
+      <Card className="rounded-[40px] border-zinc-100 overflow-hidden bg-white/90">
+        <div className="overflow-x-auto">
+          <Table className="w-full text-left">
+            <TableHeader className="bg-zinc-50/50">
+              <TableRow className="border-none">
+                <TableHead className="px-6 py-5 text-[10px] font-black text-[#0F1059] uppercase tracking-widest w-24">Asset</TableHead>
+                <TableHead 
+                   className="px-6 py-5 text-[10px] font-black text-[#0F1059] uppercase tracking-widest cursor-pointer hover:bg-zinc-100 transition-colors"
+                   onClick={() => handleSort('item_name')}
+                >
+                  <div className="flex items-center gap-1">
+                    Specifications
+                    {sortConfig.key === 'item_name' && (sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </div>
+                </TableHead>
+                <TableHead 
+                   className="px-6 py-5 text-[10px] font-black text-[#0F1059] uppercase tracking-widest cursor-pointer hover:bg-zinc-100 transition-colors"
+                   onClick={() => handleSort('item_type')}
+                >
+                  <div className="flex items-center gap-1">
+                    Classification
+                    {sortConfig.key === 'item_type' && (sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </div>
+                </TableHead>
+                <TableHead 
+                   className="px-6 py-5 text-[10px] font-black text-[#0F1059] uppercase tracking-widest cursor-pointer hover:bg-zinc-100 transition-colors"
+                   onClick={() => handleSort('remaining')}
+                >
+                  <div className="flex items-center gap-1">
+                    Stock Metrics
+                    {sortConfig.key === 'remaining' && (sortConfig.direction === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </div>
+                </TableHead>
+                <TableHead className="px-6 py-5 text-[10px] font-black text-[#0F1059] uppercase tracking-widest">Status</TableHead>
+                <TableHead className="p-0"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-zinc-100">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={6} className="h-24 animate-pulse bg-zinc-50/20" />
+                  </TableRow>
+                ))
+              ) : filteredInventory.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-6 py-20 text-center text-zinc-400 italic font-bold uppercase tracking-widest">
+                      ไม่มีรายการในคลัง / Empty Warehouse
+                  </TableCell>
+                </TableRow>
+              ) : filteredInventory.map((item) => (
+                <TableRow key={item.id} className="hover:bg-zinc-50/50 transition-colors group">
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                      {item.equipmentEntry?.purchaseOrder?.picture ? (
+                         <div className="w-14 h-14 rounded-2xl overflow-hidden bg-zinc-100 border border-zinc-200">
+                            <img src={item.equipmentEntry.purchaseOrder.picture} alt="" className="w-full h-full object-cover hover:scale-125 transition-transform duration-700" />
+                         </div>
+                      ) : (
+                         <div className="w-14 h-14 rounded-2xl bg-zinc-50 flex items-center justify-center border border-dashed border-zinc-200 text-zinc-300"><ImageIcon className="w-6 h-6" /></div>
+                      )}
+                    </TableCell>
+                  <TableCell className="px-6 py-4 min-w-[300px]">
+                     <div className="space-y-1">
+                        <div className="space-y-0.5">
+                           <span className="text-[10px] font-black text-[#0F1059] uppercase tracking-wider">{item.equipmentEntry?.purchaseOrder?.list || 'General'}</span>
+                           <div className="font-black text-zinc-900 uppercase tracking-tight text-sm leading-none">
+                              {item.equipmentEntry?.item_name}
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-[9px] font-bold text-zinc-400 uppercase">
+                           <span>PO: {item.equipmentEntry?.purchaseOrder?.po_number}</span>
+                           {item.equipmentEntry?.date_received && (
+                              <div className="flex items-center gap-1">
+                                 <Clock className="h-2.5 w-2.5" /> {new Date(item.equipmentEntry.date_received).toLocaleDateString('en-GB')}
+                              </div>
+                           )}
+                        </div>
+                     </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-[10px] font-black text-zinc-500 uppercase">
+                      {item.equipmentEntry?.item_type}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                     <div className="space-y-1">
+                        <div className="flex items-baseline gap-2">
+                           <span className={cn("text-xl font-black tracking-tighter", item.remaining > 5 ? "text-emerald-600" : item.remaining > 0 ? "text-amber-500" : "text-rose-500")}>
+                              {item.remaining}
+                           </span>
+                           <span className="text-[9px] font-black text-zinc-300 uppercase">/ {item.equipmentEntry?.unit || 'UNIT'}</span>
+                        </div>
+                        <div className="text-[8px] font-bold text-blue-500/60 uppercase">Issued: {item.payout_amount || 0}</div>
+                     </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                     <Badge variant="outline" className={cn("rounded-lg px-2.5 py-1 text-[8px] font-black uppercase tracking-widest border-zinc-200", item.remaining > 0 ? "text-emerald-600" : "text-rose-500")}>
+                        {item.status || (item.remaining > 0 ? 'AVAILABLE' : 'OUT_OF_STOCK')}
+                     </Badge>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-right">
+                     <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                        <button onClick={() => openModal(item)} className="p-2.5 rounded-xl bg-white border border-zinc-100 text-zinc-400 hover:text-[#0F1059] transition-all"><Edit2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(item.id)} className="p-2.5 rounded-xl bg-white border border-zinc-100 text-zinc-400 hover:text-rose-600 transition-all"><Trash2 className="w-4 h-4" /></button>
+                     </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="ปรับจูนสต็อก / ADJUST STOCK"
+      >
+        <form onSubmit={handleSave} className="space-y-6">
+           <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+              <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">รายการอุปกรณ์ / Stock Item</p>
+              <p className="text-sm font-bold text-[#0F1059]">{selectedItem?.equipmentEntry?.item_name}</p>
+           </div>
+           
+           <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                 <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">จำนวนคงเหลือ / Remaining Stock</label>
+                 <input 
+                    type="number" 
+                    className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm font-medium outline-none"
+                    value={formData.remaining}
+                    onChange={(e) => setFormData({...formData, remaining: parseInt(e.target.value)})}
+                 />
+              </div>
+               <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">จำนวนที่เบิกแล้ว / Amount Issued</label>
+                  <input 
+                     type="number" 
+                     className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm font-medium outline-none"
+                     value={formData.payout_amount}
+                     onChange={(e) => setFormData({...formData, payout_amount: parseInt(e.target.value) || 0})}
+                  />
+               </div>
+              <div className="space-y-1.5 col-span-2">
+                 <label className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">แก้ไขสถานะ / Status Override</label>
+                 <select 
+                    className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm font-medium outline-none cursor-pointer"
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                 >
+                    <option value="AVAILABLE">พร้อมใช้งาน / AVAILABLE</option>
+                    <option value="LOW_STOCK">ของใกล้หมด / LOW STOCK</option>
+                    <option value="OUT_OF_STOCK">สินค้าหมด / OUT OF STOCK</option>
+                    <option value="RESERVED">จองไว้ / RESERVED</option>
+                    <option value="MAINTENANCE">ส่งซ่อม / MAINTENANCE</option>
+                 </select>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-3 pt-4 border-t border-zinc-50">
+              <Button 
+                 type="button" 
+                 variant="ghost" 
+                 onClick={() => setIsModalOpen(false)}
+                 className="flex-1 h-12 rounded-xl text-[11px] font-black uppercase tracking-widest"
+              >
+                 ยกเลิก / Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSaving}
+                className="flex-1 h-12 rounded-xl bg-[#0F1059] hover:bg-black text-white text-[11px] font-black uppercase tracking-widest transition-all"
+              >
+                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "ยืนยันการปรับปรุง / Verify Adjustments"}
+              </Button>
+           </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        title="ส่งออกรายงาน Excel / EXPORT DATA"
+      >
+        <div className="space-y-6">
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center gap-4">
+             <div className="h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white">
+                <FileSpreadsheet className="h-6 w-6" />
+             </div>
+             <div>
+                <h3 className="text-sm font-black text-emerald-900 uppercase">Export Settings</h3>
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Select filters for your report</p>
+             </div>
+          </div>
+
+          <div className="space-y-4">
+             <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Start Date (Received)</label>
+                   <input 
+                      type="date" 
+                      className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm font-medium outline-none"
+                      value={exportDateStart}
+                      onChange={(e) => setExportDateStart(e.target.value)}
+                   />
+                </div>
+                <div className="space-y-1.5">
+                   <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">End Date (Received)</label>
+                   <input 
+                      type="date" 
+                      className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm font-medium outline-none"
+                      value={exportDateEnd}
+                      onChange={(e) => setExportDateEnd(e.target.value)}
+                   />
+                </div>
+             </div>
+
+             <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-100 space-y-2">
+                <p className="text-[10px] font-black text-zinc-400 uppercase">Active UI Filters (Will be applied)</p>
+                <div className="flex flex-wrap gap-2">
+                   <Badge variant="outline" className="bg-white text-[#0F1059] border-zinc-100 text-[10px]">Status: {filterStatus}</Badge>
+                   <Badge variant="outline" className="bg-white text-[#0F1059] border-zinc-100 text-[10px]">Category: {filterCategory}</Badge>
+                   {search && <Badge variant="outline" className="bg-white text-[#0F1059] border-zinc-100 text-[10px]">Search: {search}</Badge>}
+                </div>
+             </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-4">
+             <Button variant="ghost" onClick={() => setIsExportModalOpen(false)} className="flex-1 h-12 rounded-xl text-[11px] font-black uppercase tracking-widest">
+                Cancel
+             </Button>
+             <Button 
+                onClick={processExport}
+                className="flex-1 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-widest"
+             >
+                Download Excel
+             </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}

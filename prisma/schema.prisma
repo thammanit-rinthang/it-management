@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+  employeeId String?   @unique
+
+  requests          Request[]
+  comments          Comment[]
+  equipmentRequests EquipmentRequest[]
+  auditLogs         AuditLog[]
+}
+
+model Employee {
+  id               String    @id @default(cuid())
+  employee_code    String    @unique
+  employee_name_th String
+  employee_name_en String?
+  gender           String?
+  position         String?
+  department       String?
+  work_location    String?
+  supervisor_name  String?
+  start_date       DateTime?
+  end_date         DateTime?
+  status           String?
+  requests         Request[]
+  user             User?
+
+  @@map("employees")
+}
+
+enum Category {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  GENERAL
+}
+
+enum Priority { 
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model Request {
+  id            String    @id @default(cuid())
+  employeeId    String
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type_request  String
+  description   String
+  reason        String?
+  category      Category
+  priority      Priority
+  status        Status    @default(OPEN)
+  approval          String?
+  approval_status   String?
+  approval_comment  String?
+  approval_date     DateTime?
+  it_approval          String?
+  it_approval_status   String?
+  it_approval_comment  String?
+  it_approval_date     DateTime?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments      Comment[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  parentId  String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model EquipmentPurchaseOrder {
+  id           String   @id @default(cuid())
+  list         String?
+  detail       String?
+  quantity     Int      @default(0)
+  reason_order String?
+  picture      String?
+  buyer        String?
+  reviewer     String?
+  approver     String?
+  date_order   DateTime @default(now())
+  status       String   @default("PENDING")
+
+  entries EquipmentEntryList[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("equipment_purchase_orders")
+}
+
+model EquipmentEntryList {
+  id            String                 @id @default(cuid())
+  purchase_id   String
+  purchaseOrder EquipmentPurchaseOrder @relation(fields: [purchase_id], references: [id], onDelete: Cascade)
+  list          String?
+  brand_name    String?
+  quantity      Int                    @default(0)
+  unit          String?
+  recipient     String?
+  date_received DateTime?
+  item_type     String    @default("MAIN")
+
+  equipmentLists EquipmentList[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("equipment_entry_lists")
+}
+
+model EquipmentList {
+  id                 String             @id @default(cuid())
+  equipment_entry_id String
+  equipmentEntry     EquipmentEntryList @relation(fields: [equipment_entry_id], references: [id], onDelete: Cascade)
+  payout_amount      Float?
+  remaining          Int                @default(0)
+  status             String?
+
+  requests EquipmentRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("equipment_lists")
+}
+
+model EquipmentRequest {
+  id                String        @id @default(cuid())
+  equipment_list_id String
+  equipmentList     EquipmentList @relation(fields: [equipment_list_id], references: [id], onDelete: Cascade)
+  quantity          Int           @default(1)
+  reason            String?
+  remarks           String?
+  approval          String?
+  approval_status   String?
+  approval_comment  String?
+  approval_date     DateTime?
+  it_approval          String?
+  it_approval_status   String?
+  it_approval_comment  String?
+  it_approval_date     DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("equipment_requests")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  userName  String?
+  action    String
+  module    String
+  details   String?
+  ipAddress String?
+  userAgent String?
+  device    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
