@@ -110,6 +110,10 @@ function RequestsContent() {
                description: itemName || ""
             }));
          }
+
+         if (action === 'new') {
+            setIsModalOpen(true);
+         }
       }
    }, [session, action, itemName]);
 

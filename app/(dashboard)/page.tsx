@@ -9,6 +9,7 @@ import { InventoryStock } from "@/components/dashboard/InventoryStock";
 import { logger } from "@/lib/logger";
 import { useEffect, Suspense, lazy } from "react";
 import { Loader2 } from "lucide-react";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 
 // Lazy-load heavier components for performance
 const StatsGrid = lazy(() => import("@/components/dashboard/StatsGrid").then(module => ({ default: module.StatsGrid })));
@@ -63,8 +64,8 @@ export default function DashboardPage() {
   if (!session) return null;
 
   return (
-    <div className="p-4 sm:p-5 space-y-5 w-full animate-in fade-in duration-1000">
-      <DashboardHeader 
+    <div className="p-4 sm:p-5 space-y-4 w-full animate-in fade-in duration-1000">
+      <DashboardHeader
         isAdmin={isAdmin}
         dateFilter={dateFilter}
         setDateFilter={setDateFilter}
@@ -77,8 +78,10 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {!isAdmin && <QuickActions />}
+
       <Suspense fallback={<div className="h-32 bg-zinc-50 rounded-2xl animate-pulse" />}>
-        <StatsGrid 
+        <StatsGrid
           isAdmin={isAdmin}
           filteredRequests={filteredRequests}
           inventory={inventory}
@@ -88,11 +91,11 @@ export default function DashboardPage() {
         />
       </Suspense>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <div className="xl:col-span-2 space-y-5 w-full">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 space-y-4 w-full">
           {isAdmin && (
             <Suspense fallback={<LoadingFallback />}>
-              <DashboardCharts 
+              <DashboardCharts
                 trendData={trendData}
                 urgencyData={urgencyData}
                 categoryData={categoryData}
@@ -107,14 +110,14 @@ export default function DashboardPage() {
               />
             </Suspense>
           )}
-
           {!isAdmin && (
             <InventoryStock inventory={inventory} />
           )}
         </div>
 
-        <div className="xl:col-span-1 space-y-5">
-          <RecentActivity 
+        <div className="space-y-4 xl:col-span-1">
+
+          <RecentActivity
             isAdmin={isAdmin}
             isLoading={isLoading}
             filteredActivities={activities}

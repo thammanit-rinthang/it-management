@@ -117,7 +117,6 @@ export function Sidebar({ isCollapsed, onToggle, isMobileOpen, onCloseMobile }: 
           {!isCollapsed && (
             <div className="flex flex-col whitespace-nowrap">
               <span className="font-bold text-sm tracking-tight uppercase leading-none text-white">NDC IT</span>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-[#868E96] mt-1 font-bold">Service Hub</span>
             </div>
           )}
         </div>

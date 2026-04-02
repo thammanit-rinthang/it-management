@@ -401,7 +401,7 @@ export default function ApprovalsPage() {
                                  <Button 
                                     variant="ghost" 
                                     className="h-8 w-8 p-0 rounded-lg bg-secondary/50 text-accent hover:bg-primary hover:text-white transition-all shadow-sm"
-                                    onClick={() => window.location.href = r.__type === "EQUIPMENT" ? `/admin/equipment-requests/${r.id}` : `/admin/tickets/${r.id}`}
+                                     onClick={() => openConfirm(r, r.__type)}
                                  >
                                     <ChevronRight className="h-4 w-4" />
                                  </Button>

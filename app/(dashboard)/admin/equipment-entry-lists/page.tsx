@@ -42,6 +42,7 @@ interface Entry {
     po_code: string;
     list: string;
     picture?: string;
+    status: string;
   }
   createdAt?: string;
   updatedAt?: string;
@@ -495,7 +496,9 @@ export default function EquipmentEntriesPage() {
                  onChange={(e) => handlePOChange(e.target.value)}
               >
                  <option value="">-- SELECT PURCHASE ORDER --</option>
-                  {pos.map(po => (
+                  {pos
+                    .filter(po => po.status !== 'RECEIVED' || po.id === formData.purchase_id)
+                    .map(po => (
                      <option key={po.id} value={po.id}>
                         {po.status === 'RECEIVED' ? '[✓ RECEIVED] ' : `[STATUS: ${po.status}] `} {po.list}
                      </option>

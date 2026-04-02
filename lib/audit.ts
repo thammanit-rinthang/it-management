@@ -1,17 +1,17 @@
 import { prisma } from "./prisma";
 
 interface LogParams {
-  userId?: string;
-  userName?: string;
+  userId?: string | null;
+  userName?: string | null;
   action: string;
   module: string;
   details?: string | object;
-  ipAddress?: string;
-  userAgent?: string;
-  device?: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  device?: string | null;
 }
 
-function parseDevice(ua?: string) {
+function parseDevice(ua?: string | null) {
   if (!ua) return "Unknown";
   if (ua.includes("iPhone")) return "iPhone";
   if (ua.includes("iPad")) return "iPad";

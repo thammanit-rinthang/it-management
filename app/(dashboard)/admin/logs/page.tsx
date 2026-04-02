@@ -19,14 +19,14 @@ import { useTranslation } from "@/lib/i18n/LanguageContext";
 
 interface AuditLog {
   id: string;
-  userId?: string;
-  userName?: string;
+  userId?: string | null;
+  userName?: string | null;
   action: string;
   module: string;
-  details?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  device?: string;
+  details?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  device?: string | null;
   createdAt: string;
 }
 
@@ -96,7 +96,7 @@ export default function AuditLogsPage() {
 
   const getActionBadge = (action: string) => {
     const act = action.toUpperCase();
-    if (act.includes("FAILURE") || act.includes("DELETE") || act.includes("ERROR")) return "destructive";
+    if (act.includes("FAILURE") || act.includes("DELETE") || act.includes("ERROR")) return "danger";
     if (act.includes("SUCCESS") || act.includes("APPROVE") || act.includes("OK")) return "success";
     if (act.includes("CREATE") || act.includes("UPDATE") || act.includes("CHANGE")) return "warning";
     return "secondary";

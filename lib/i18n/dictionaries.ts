@@ -248,6 +248,9 @@ export const translations = {
       admin_title: "Administrative Control Center",
       user_title: "Dashboard",
       all_time: "All Time",
+      quick_actions: "Quick Actions",
+      report_repair: "Report Repair",
+      request_equipment: "Request Equipment",
     },
     po: {
       title: "Purchase Orders",
@@ -666,6 +669,9 @@ export const translations = {
       admin_title: "ศูนย์ควบคุมระบบ",
       user_title: "หน้าแรก",
       all_time: "ทุกช่วงเวลา",
+      quick_actions: "เมนูทางลัด",
+      report_repair: "แจ้งซ่อมอุปกรณ์",
+      request_equipment: "เบิกอุปกรณ์ไอที",
     },
     po: {
       title: "รายการสั่งซื้อ",

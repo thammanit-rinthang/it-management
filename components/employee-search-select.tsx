@@ -9,8 +9,8 @@ export interface Employee {
   id: string;
   employee_name_th: string;
   employee_code: string;
-  department?: string;
-  position?: string;
+  department?: string | null;
+  position?: string | null;
 }
 
 export interface EmployeeSearchSelectProps {

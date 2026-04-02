@@ -73,10 +73,12 @@ export async function PATCH(
         if (!solo) throw new Error("Request not found");
         
         // Single item stock logic
-        if (it_approval_status === "APPROVED" && (solo as any).it_approval_status !== "APPROVED") {
-           await tx.equipmentList.update({ where: { id: solo.equipment_list_id }, data: { remaining: { decrement: solo.quantity } } });
-        } else if (it_approval_status !== "APPROVED" && (solo as any).it_approval_status === "APPROVED") {
-           await tx.equipmentList.update({ where: { id: solo.equipment_list_id }, data: { remaining: { increment: solo.quantity } } });
+        if (solo.equipment_list_id) {
+          if (it_approval_status === "APPROVED" && (solo as any).it_approval_status !== "APPROVED") {
+             await tx.equipmentList.update({ where: { id: solo.equipment_list_id }, data: { remaining: { decrement: solo.quantity } } });
+          } else if (it_approval_status !== "APPROVED" && (solo as any).it_approval_status === "APPROVED") {
+             await tx.equipmentList.update({ where: { id: solo.equipment_list_id }, data: { remaining: { increment: solo.quantity } } });
+          }
         }
 
         return await tx.equipmentRequest.update({
@@ -90,10 +92,12 @@ export async function PATCH(
 
       // Group update logic
       for (const item of group.requests) {
-        if (it_approval_status === "APPROVED" && (item as any).it_approval_status !== "APPROVED") {
-           await tx.equipmentList.update({ where: { id: item.equipment_list_id }, data: { remaining: { decrement: item.quantity } } });
-        } else if (it_approval_status !== "APPROVED" && (item as any).it_approval_status === "APPROVED") {
-           await tx.equipmentList.update({ where: { id: item.equipment_list_id }, data: { remaining: { increment: item.quantity } } });
+        if (item.equipment_list_id) {
+          if (it_approval_status === "APPROVED" && (item as any).it_approval_status !== "APPROVED") {
+             await tx.equipmentList.update({ where: { id: item.equipment_list_id }, data: { remaining: { decrement: item.quantity } } });
+          } else if (it_approval_status !== "APPROVED" && (item as any).it_approval_status === "APPROVED") {
+             await tx.equipmentList.update({ where: { id: item.equipment_list_id }, data: { remaining: { increment: item.quantity } } });
+          }
         }
       }
 
@@ -149,7 +153,7 @@ export async function DELETE(
 
       if (group) {
         for (const item of group.requests) {
-          if ((item as any).it_approval_status === "APPROVED") {
+          if (item.equipment_list_id && (item as any).it_approval_status === "APPROVED") {
             await tx.equipmentList.update({ where: { id: item.equipment_list_id }, data: { remaining: { increment: item.quantity } } });
           }
         }
@@ -158,7 +162,7 @@ export async function DELETE(
       } else {
         const solo = await tx.equipmentRequest.findUnique({ where: { id } });
         if (solo) {
-          if ((solo as any).it_approval_status === "APPROVED") {
+          if (solo.equipment_list_id && (solo as any).it_approval_status === "APPROVED") {
             await tx.equipmentList.update({ where: { id: solo.equipment_list_id }, data: { remaining: { increment: solo.quantity } } });
           }
           await tx.equipmentRequest.delete({ where: { id } });

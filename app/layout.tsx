@@ -15,8 +15,7 @@ import { Providers } from "@/components/providers";
   });
 
 export const metadata: Metadata = {
-  title: "NDC IT Service Hub",
-  description: "Next-generation IT Service portal for NDC employees and administrators.",
+  title: "NDC IT",
 };
 
 export default function RootLayout({

@@ -26,39 +26,39 @@ interface RequestTicket {
   id: string;
   request_code: string;
   description: string;
-  reason?: string;
+  reason?: string | null;
   category: string;
   priority: string;
   status: string;
   createdAt: string;
   updatedAt: string;
-  employeeId?: string;
-  type_request?: string;
-  approval?: string;
-  approval_status?: string;
-  approval_comment?: string;
-  approval_date?: string;
-  it_approval?: string;
-  it_approval_status?: string;
-  it_approval_comment?: string;
-  it_approval_date?: string;
+  employeeId?: string | null;
+  type_request?: string | null;
+  approval?: string | null;
+  approval_status?: string | null;
+  approval_comment?: string | null;
+  approval_date?: string | null;
+  it_approval?: string | null;
+  it_approval_status?: string | null;
+  it_approval_comment?: string | null;
+  it_approval_date?: string | null;
   employee?: {
     id: string;
     employee_name_th: string;
-    employee_code?: string;
-    department?: string;
-    position?: string;
-    supervisor_name?: string;
+    employee_code?: string | null;
+    department?: string | null;
+    position?: string | null;
+    supervisor_name?: string | null;
   };
-  user?: { username: string; role?: string };
+  user?: { username: string; role?: string | null };
 }
 
 interface Employee {
   id: string;
   employee_name_th: string;
   employee_code: string;
-  department?: string;
-  position?: string;
+  department?: string | null;
+  position?: string | null;
 }
 
 export default function TicketsPage() {

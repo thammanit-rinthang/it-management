@@ -1,11 +1,14 @@
 import { LoginForm } from "@/components/login-form";
+import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
     <main className="min-h-screen relative flex flex-col items-center justify-center bg-[#F8F9FA] px-6 py-20 animate-in fade-in duration-1000">
       <div className="w-full max-w-sm flex flex-col items-center">
          <div className="w-full bg-white rounded-2xl border border-zinc-100 shadow-sm relative overflow-hidden group">
-            <LoginForm />
+            <Suspense fallback={<div className="p-8 text-center text-zinc-400 font-medium">Loading form...</div>}>
+               <LoginForm />
+            </Suspense>
          </div>
       </div>
       <div className="fixed inset-0 pointer-events-none z-[-1] opacity-60">

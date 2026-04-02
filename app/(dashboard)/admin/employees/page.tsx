@@ -21,15 +21,15 @@ interface Employee {
   id: string;
   employee_code: string;
   employee_name_th: string;
-  employee_name_en?: string;
-  gender?: string;
-  department?: string;
-  position?: string;
-  work_location?: string;
-  supervisor_name?: string;
-  start_date?: string;
-  end_date?: string;
-  status?: string;
+  employee_name_en?: string | null;
+  gender?: string | null;
+  department?: string | null;
+  position?: string | null;
+  work_location?: string | null;
+  supervisor_name?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  status?: string | null;
 }
 
 export default function EmployeesPage() {

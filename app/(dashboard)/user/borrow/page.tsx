@@ -1,5 +1,5 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import React, { useState, useEffect } from "react";
 import { Search, Loader2, Package, Plus, ClipboardCheck, AlertCircle, ShoppingBag, Link as LinkIcon, Check, User, Eye, FileDown, Clock, Minus, X, FileText } from "lucide-react";
@@ -78,12 +78,14 @@ interface Employee {
   id: string;
   employee_name_th: string;
   employee_code: string;
-  department?: string;
-  position?: string;
+  department?: string | null;
+  position?: string | null;
 }
 
-export default function BorrowPage() {
+function BorrowContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const action = searchParams.get('action');
   const { data: session } = useSession();
   const { t, locale } = useTranslation();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -159,8 +161,13 @@ export default function BorrowPage() {
     if (session) {
       fetchData();
       fetchEmployees();
+
+      if (action === 'new') {
+        setCart([]);
+        setIsModalOpen(true);
+      }
     }
-  }, [session]);
+  }, [session, action]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -869,5 +876,13 @@ export default function BorrowPage() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+export default function BorrowPage() {
+  return (
+    <React.Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-[#0F1059]" /></div>}>
+      <BorrowContent />
+    </React.Suspense>
   );
 }
