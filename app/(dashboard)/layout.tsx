@@ -115,12 +115,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <div className="w-56 p-2">
                   <div className="px-3 py-2 border-b border-border mb-1">
-                    <p className="text-xs font-semibold text-accent uppercase">{t('profile.account')}</p>
+                    <p className="text-xs font-semibold text-accent uppercase">{employee?.employee_name_th}</p>
                   </div>
-                  <DropdownItem className="rounded-lg gap-3 py-2.5">
-                    <User className="h-4 w-4" />
-                    <span>{t('profile.my_profile')}</span>
-                  </DropdownItem>
                   <DropdownItem className="rounded-lg gap-3 py-2.5" onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 text-danger" />
                     <span className="text-danger font-semibold">{t('profile.sign_out')}</span>

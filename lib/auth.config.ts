@@ -31,14 +31,7 @@ export const authConfig = {
         token.role = (user as any).role;
         token.id = user.id;
         token.employeeId = (user as any).employeeId;
-        
-        // Fetch name since it's not standard
-        const { prisma } = await import("@/lib/prisma");
-        const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          include: { employee: true }
-        });
-        token.name = dbUser?.employee?.employee_name_en || dbUser?.username;
+        token.name = user.name;
       }
       return token;
     },

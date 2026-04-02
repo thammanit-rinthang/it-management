@@ -24,6 +24,9 @@ export const {
 
         let user = await prisma.user.findUnique({
           where: { username: username as string },
+          include: {
+            employee: true
+          }
         });
 
         if (!user) {
@@ -37,7 +40,13 @@ export const {
 
         const passwordsMatch = await bcrypt.compare(password as string, user.password);
         if (passwordsMatch) {
-          return user;
+          return {
+            id: user.id,
+            name: user.employee?.employee_name_en || user.username,
+            username: user.username,
+            role: user.role,
+            employeeId: user.employeeId,
+          };
         }
 
         await logAudit({
@@ -52,10 +61,7 @@ export const {
   ],
   events: {
     async signIn({ user }) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        include: { employee: true }
-      });
+      const { username, name } = user as any;
       
       const headList = await headers();
       const ip = headList.get("x-forwarded-for") || "unknown";
@@ -63,10 +69,10 @@ export const {
 
       await logAudit({
         userId: user.id,
-        userName: dbUser?.employee?.employee_name_en || "Unknown",
+        userName: name || "Unknown",
         action: "LOGIN_SUCCESS",
         module: "AUTH",
-        details: { username: dbUser?.username },
+        details: { username },
         ipAddress: ip,
         userAgent: ua
       });
