@@ -221,6 +221,7 @@ export const translations = {
       stock_count: "Stock",
       issued: "Issued",
       code: "Equipment Code",
+      stock: "Stock",
     },
     approvals: {
       title: "IT Approval Center",
@@ -495,7 +496,7 @@ export const translations = {
       sign_out: "ออกจากระบบ",
     },
     common: {
-      export: "ส่งออก",
+      export: "Export",
       type: "ประเภท",
       search: "ค้นหา",
       loading: "กำลังโหลด...",
@@ -702,6 +703,7 @@ export const translations = {
       stock_count: "จำนวนในคลัง",
       issued: "เบิกไปแล้ว",
       code: "รหัสอุปกรณ์",
+      stock: "สต็อก",
     },
     approvals: {
       title: "ศูนย์อนุมัติรายการ",
