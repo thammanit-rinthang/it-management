@@ -275,6 +275,50 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.AssetScalarFieldEnum = {
+  id: 'id',
+  asset_code: 'asset_code',
+  serial_number: 'serial_number',
+  type: 'type',
+  name: 'name',
+  brand: 'brand',
+  model: 'model',
+  specs: 'specs',
+  purchase_date: 'purchase_date',
+  warranty_expire: 'warranty_expire',
+  price: 'price',
+  status: 'status',
+  location: 'location',
+  employeeId: 'employeeId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AssetHistoryScalarFieldEnum = {
+  id: 'id',
+  assetId: 'assetId',
+  employeeId: 'employeeId',
+  employeeName: 'employeeName',
+  location: 'location',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  action: 'action',
+  remarks: 'remarks',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserCredentialScalarFieldEnum = {
+  id: 'id',
+  employeeId: 'employeeId',
+  account_type: 'account_type',
+  username: 'username',
+  password: 'password',
+  email_address: 'email_address',
+  remarks: 'remarks',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -319,7 +363,10 @@ exports.Prisma.ModelName = {
   EquipmentList: 'EquipmentList',
   EquipmentRequest: 'EquipmentRequest',
   EquipmentBorrowGroup: 'EquipmentBorrowGroup',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  Asset: 'Asset',
+  AssetHistory: 'AssetHistory',
+  UserCredential: 'UserCredential'
 };
 
 /**

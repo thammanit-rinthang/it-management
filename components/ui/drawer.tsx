@@ -24,7 +24,21 @@ const sizes = {
   full: "max-w-full",
 };
 
-export function Drawer({ isOpen, onClose, title, children, size = "md" }: DrawerProps) {
+const heights = {
+  md: "max-h-[50vh]",
+  lg: "max-h-[70vh]",
+  xl: "max-h-[85vh]",
+  full: "max-h-full",
+};
+
+export function Drawer({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
+  size = "md",
+  direction = "right" 
+}: DrawerProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -35,6 +49,16 @@ export function Drawer({ isOpen, onClose, title, children, size = "md" }: Drawer
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  const isVertical = direction === "top" || direction === "bottom";
+
+  const initial = direction === "right" ? { x: "100%" } : 
+                  direction === "top" ? { y: "-100%" } : { y: "100%" };
+  
+  const animate = direction === "right" ? { x: 0 } : { y: 0 };
+  
+  const exit = direction === "right" ? { x: "100%" } : 
+               direction === "top" ? { y: "-100%" } : { y: "100%" };
 
   return (
     <AnimatePresence>
@@ -48,15 +72,29 @@ export function Drawer({ isOpen, onClose, title, children, size = "md" }: Drawer
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
           
-          <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
+          <div className={cn(
+             "absolute flex max-w-full",
+             direction === "right" && "inset-y-0 right-0 pl-10",
+             direction === "top" && "inset-x-0 top-0 pb-10",
+             direction === "bottom" && "inset-x-0 bottom-0 pt-10"
+          )}>
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              initial={initial}
+              animate={animate}
+              exit={exit}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className={cn("w-screen pointer-events-auto", sizes[size])}
+              className={cn(
+                "w-screen pointer-events-auto", 
+                !isVertical ? sizes[size] : "w-full mx-auto",
+                isVertical && "max-w-5xl"
+              )}
             >
-              <div className="flex h-full flex-col bg-surface shadow-2xl border-l border-border transition-colors">
+              <div className={cn(
+                "flex flex-col bg-surface shadow-2xl border-border transition-colors",
+                direction === "right" && "h-full border-l",
+                direction === "top" && "rounded-b-[40px] border-b shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)]",
+                direction === "bottom" && "rounded-t-[40px] border-t h-auto"
+              )}>
                 <div className="flex items-center justify-between px-6 py-5 border-b border-border">
                   <h2 className="text-lg font-bold text-foreground capitalize tracking-tight">{title}</h2>
                   <button
@@ -67,7 +105,10 @@ export function Drawer({ isOpen, onClose, title, children, size = "md" }: Drawer
                   </button>
                 </div>
                 
-                <div className="relative flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
+                <div className={cn(
+                   "relative flex-1 overflow-y-auto px-6 py-6 custom-scrollbar",
+                   isVertical && heights[size]
+                )}>
                   {children}
                 </div>
               </div>

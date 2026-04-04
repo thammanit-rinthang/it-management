@@ -21,7 +21,8 @@ import {
   History,
   ChevronLeft,
   PlusCircle,
-  Laptop
+  Laptop,
+  Lock
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -87,6 +88,8 @@ export function Sidebar({ isCollapsed, onToggle, isMobileOpen, onCloseMobile }: 
     { name: t('sidebar.purchase_orders'), href: "/admin/purchase-orders", icon: ShoppingCart },
     { name: t('sidebar.receiving'), href: "/admin/equipment-entry-lists", icon: Truck },
     { name: t('sidebar.inventory'), href: "/admin/inventory", icon: Warehouse },
+    { name: t('sidebar.assets'), href: "/admin/assets", icon: Laptop },
+    { name: t('sidebar.credentials'), href: "/admin/credentials", icon: Lock },
     { name: t('sidebar.employees'), href: "/admin/employees", icon: Users },
     { name: t('sidebar.users'), href: "/admin/users", icon: UserCog },
     { name: t('sidebar.import'), href: "/admin/import", icon: FileJson },
