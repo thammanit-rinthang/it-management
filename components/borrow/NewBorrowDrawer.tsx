@@ -35,7 +35,6 @@ export function NewBorrowDrawer({
 }: NewBorrowDrawerProps) {
   const { data: session } = useSession();
   const { t, locale } = useTranslation();
-const [viewingItem, setViewingItem] = useState<any | null>(null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [invSearch, setInvSearch] = useState("");

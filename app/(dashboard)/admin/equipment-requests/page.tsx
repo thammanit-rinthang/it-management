@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { exportToExcel } from "@/lib/export-utils";
-import { PDFViewer } from "@react-pdf/renderer";
+import { PDFPreview } from "@/components/pdf/PDFPreview";
 import { BorrowRequisitionPDF } from "@/lib/pdf/BorrowRequisitionPDF";
 import { Eye } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
@@ -902,9 +902,10 @@ export default function AdminEquipmentRequestsPage() {
       >
         <div className="h-[75vh] w-full rounded-3xl overflow-hidden border border-zinc-100 shadow-xl">
           {previewData && (
-            <PDFViewer width="100%" height="100%" showToolbar={true}>
-              <BorrowRequisitionPDF data={previewData} locale={locale} />
-            </PDFViewer>
+            <PDFPreview 
+              document={<BorrowRequisitionPDF data={previewData} locale={locale} />} 
+              fileName={`${previewData.group_code || 'BORROW'}.pdf`}
+            />
           )}
         </div>
       </Modal>

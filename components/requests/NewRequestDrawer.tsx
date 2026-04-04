@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, Loader2, Clock, Check, ClipboardCheck } from "lucide-react";
+import { Search, Loader2, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
 import { Drawer } from "@/components/ui/drawer";
 import { useSession } from "next-auth/react";
 import { useTranslation } from "@/lib/i18n/LanguageContext";
