@@ -26,8 +26,8 @@ model User {
 }
 
 model Employee {
-  id               String    @id @default(cuid())
-  employee_code    String    @unique
+  id               String           @id @default(cuid())
+  employee_code    String           @unique
   employee_name_th String
   employee_name_en String?
   gender           String?
@@ -40,6 +40,8 @@ model Employee {
   status           String?
   requests         Request[]
   user             User?
+  assets           Asset[]
+  credentials      UserCredential[]
 
   @@map("employees")
 }
@@ -253,4 +255,78 @@ model AuditLog {
   @@index([module])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model Asset {
+  id            String @id @default(cuid())
+  // รหัสทรัพย์สิน เช่น NDCPC0001, NDCNB0001, NDCSC0001
+  asset_code    String @unique
+  serial_number String @unique
+
+  // ประเภทอุปกรณ์: PC, NOTEBOOK, SCREEN, PRINTER
+  type  String
+  name  String // ชื่อเรียกเครื่อง เช่น Notebook Admin 01
+  brand String?
+  model String?
+  specs String? @db.Text
+
+  // ข้อมูลการจัดซื้อและประกัน
+  purchase_date   DateTime?
+  warranty_expire DateTime?
+  price           Float?    @default(0)
+
+  // สถานะปัจจุบัน: AVAILABLE, IN_USE, REPAIR, SCRAP
+  status String @default("AVAILABLE")
+
+  // สถานที่ตั้งปัจจุบัน (เช่น Office Rayong, IT Room, Meeting Room A)
+  location String?
+
+  // ความสัมพันธ์: ใครเป็นคนใช้ (Current Holder)
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  // ประวัติการย้ายที่ตั้งหรือเปลี่ยนมือผู้ใช้
+  history AssetHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("assets")
+}
+
+model AssetHistory {
+  id      String @id @default(cuid())
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  employeeId   String?
+  employeeName String? // เก็บชื่อไว้เผื่อข้อมูลพนักงานถูกลบ
+  location     String? // สถานที่ที่เคยตั้ง
+
+  startDate DateTime  @default(now()) // เริ่มใช้/เริ่มตั้ง วันที่
+  endDate   DateTime? // คืนเครื่อง/ย้ายที่ วันที่
+
+  action  String? // เช่น "ASSIGN", "TRANSFER", "RETURN", "REPAIR"
+  remarks String?
+
+  createdAt DateTime @default(now())
+
+  @@map("asset_history")
+}
+
+model UserCredential {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  account_type  String[] // EMAIL, FILE_SHARE, VPN, ERP, SOFTWARE, OTHER
+  username      String
+  password      String // แนะนำให้เข้ารหัส (Encrypted) ก่อนบันทึก
+  email_address String? // สำหรับเก็บอีเมลโดยเฉพาะ
+  remarks       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_credentials")
 }
