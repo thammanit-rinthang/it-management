@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Loader2, ShoppingCart, Plus, Edit2, Trash2, Image as ImageIcon, Upload, ChevronUp, ChevronDown, FileSpreadsheet, Square, CheckSquare } from "lucide-react";
+import { Search, Loader2, ShoppingCart, Plus, Edit2, Trash2, Image as ImageIcon, Upload, ChevronUp, ChevronDown, FileSpreadsheet, Square, CheckSquare, Eye, Printer, Calendar, User, Info, FileText } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -60,6 +60,7 @@ export default function PurchaseOrdersPage() {
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState("PENDING");
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Recommendations
   const [recommendations, setRecommendations] = useState<any[]>([]);
@@ -580,6 +581,9 @@ export default function PurchaseOrdersPage() {
                   </TableCell>
                   <TableCell className="px-4 py-4 whitespace-nowrap text-right">
                     <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                      <button onClick={() => { setSelectedOrder(order); setIsViewModalOpen(true); }} className="p-2.5 rounded-lg bg-white border border-zinc-100 text-zinc-400 hover:text-blue-500 transition-all shadow-sm" title="View Details">
+                        <Eye className="w-4 h-4" />
+                      </button>
                       <button onClick={() => openModal(order)} className="p-2.5 rounded-lg bg-white border border-zinc-100 text-zinc-400 hover:text-[#0F1059] transition-all shadow-sm">
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -1001,6 +1005,144 @@ export default function PurchaseOrdersPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+      {/* View Details Modal */}
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title={t('po.view_title') || "Purchase Order Details"}
+      >
+        {selectedOrder && (
+          <div className="space-y-6 font-sans">
+            {/* Header info */}
+            <div className="flex justify-between items-start border-b border-zinc-100 pb-4">
+               <div className="space-y-1">
+                  <Badge variant="outline" className="bg-[#0F1059]/5 text-[#0F1059] border-[#0F1059]/10 font-black text-[10px] uppercase tracking-widest px-3 py-1">
+                     {selectedOrder.po_code}
+                  </Badge>
+                  <h2 className="text-xl font-black text-[#0F1059] uppercase tracking-tight">{selectedOrder.list}</h2>
+               </div>
+               <Badge variant="outline"
+                  className={cn("rounded-lg text-[9px] font-black uppercase tracking-widest px-3 py-1.5 border-zinc-200 shadow-sm",
+                    selectedOrder.status === "RECEIVED" ? "text-emerald-600 bg-emerald-50" :
+                    selectedOrder.status === "PENDING" ? "text-amber-600 bg-amber-50" :
+                    selectedOrder.status === "CANCELLED" ? "text-rose-600 bg-rose-50" : "text-blue-600 bg-blue-50"
+                  )}
+               >
+                 {selectedOrder.status}
+               </Badge>
+            </div>
+
+            {/* Content grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-4">
+                  {/* Image */}
+                  <div className="aspect-square rounded-2xl bg-zinc-50 border border-zinc-100 overflow-hidden group relative">
+                     {selectedOrder.picture ? (
+                        <img src={selectedOrder.picture} alt="" className="w-full h-full object-cover" />
+                     ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-zinc-300">
+                           <ImageIcon className="h-12 w-12 mb-2" />
+                           <span className="text-[10px] font-bold uppercase tracking-widest">No Media Available</span>
+                        </div>
+                     )}
+                     {selectedOrder.picture && (
+                        <button onClick={() => window.open(selectedOrder.picture, '_blank')} className="absolute bottom-4 right-4 bg-white/90 backdrop-blur shadow-xl p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                           <Eye className="h-4 w-4 text-[#0F1059]" />
+                        </button>
+                     )}
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-zinc-50/50 border border-zinc-100 space-y-3">
+                     <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-[#0F1059]">
+                           <Calendar className="h-4 w-4" />
+                        </div>
+                        <div>
+                           <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Order Date</p>
+                           <p className="text-xs font-black text-[#0F1059]">{selectedOrder.date_order ? new Date(selectedOrder.date_order).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-GB') : '-'}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-amber-500">
+                           <ShoppingCart className="h-4 w-4" />
+                        </div>
+                        <div>
+                           <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Quantity</p>
+                           <p className="text-xs font-black text-[#0F1059]">{selectedOrder.quantity} <span className="text-[10px] text-zinc-300">UNITS</span></p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="space-y-5">
+                  <div className="space-y-1.5">
+                     <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <Info className="h-3 w-3" /> Technical Details
+                     </label>
+                     <p className="text-sm font-medium text-zinc-700 bg-zinc-50 p-4 rounded-xl border border-zinc-100 min-h-[100px] leading-relaxed italic">
+                        {selectedOrder.detail || "No additional technical details provided."}
+                     </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                     <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <FileText className="h-3 w-3" /> Purchase Reason
+                     </label>
+                     <div className="p-3 bg-amber-50/50 border border-amber-100 rounded-xl">
+                        <p className="text-xs font-bold text-amber-700">{selectedOrder.reason_order || "N/A"}</p>
+                     </div>
+                  </div>
+
+                  {/* Actors */}
+                  <div className="grid grid-cols-1 gap-3 pt-4 border-t border-zinc-100">
+                     <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-50/50 border border-zinc-100">
+                        <div className="flex items-center gap-2">
+                           <User className="h-3.5 w-3.5 text-zinc-400" />
+                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Buyer</span>
+                        </div>
+                        <span className="text-xs font-bold text-[#0F1059]">{selectedOrder.buyer || "-"}</span>
+                     </div>
+                     <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-50/50 border border-zinc-100">
+                        <div className="flex items-center gap-2">
+                           <User className="h-3.5 w-3.5 text-zinc-400" />
+                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Reviewer</span>
+                        </div>
+                        <span className="text-xs font-bold text-zinc-600">{selectedOrder.reviewer || "-"}</span>
+                     </div>
+                     <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-50/50 border border-zinc-100">
+                        <div className="flex items-center gap-2">
+                           <User className="h-3.5 w-3.5 text-zinc-400" />
+                           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Approver</span>
+                        </div>
+                        <span className="text-xs font-bold text-zinc-600">{selectedOrder.approver || "-"}</span>
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* Timestamps */}
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-zinc-50/50 border border-zinc-100 mt-4 border-t-2 border-t-[#0F1059]/10">
+               <div>
+                 <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Created At</p>
+                 <p className="text-[10px] font-bold text-zinc-500 italic">{selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString(locale === 'th' ? 'th-TH' : 'en-GB') : '-'}</p>
+               </div>
+               <div>
+                 <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Last Updated</p>
+                 <p className="text-[10px] font-bold text-zinc-500 italic">{selectedOrder.updatedAt ? new Date(selectedOrder.updatedAt).toLocaleString(locale === 'th' ? 'th-TH' : 'en-GB') : '-'}</p>
+               </div>
+            </div>
+
+            <div className="pt-6 flex gap-3">
+               <Button onClick={() => setIsViewModalOpen(false)} className="flex-1 h-12 rounded-xl bg-[#0F1059] hover:bg-black text-white font-black uppercase tracking-widest text-[11px] transition-all shadow-xl shadow-[#0F1059]/20">
+                  Close Details
+               </Button>
+               <Button onClick={() => { setIsViewModalOpen(false); openModal(selectedOrder); }} variant="outline" className="flex-1 h-12 rounded-xl border-zinc-200 font-black uppercase tracking-widest text-[11px] hover:bg-zinc-50 hover:text-[#0F1059] hover:border-[#0F1059]">
+                  Edit Order Info
+               </Button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
