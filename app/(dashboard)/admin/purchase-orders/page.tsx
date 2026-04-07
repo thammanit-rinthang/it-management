@@ -119,12 +119,7 @@ export default function PurchaseOrdersPage() {
         const res = await fetch(`/api/equipment-purchase-orders/recommendations?search=${encodeURIComponent(formData.list)}`);
         if (res.ok) {
            const data = await res.json();
-           // Only show recommendations if the current list isn't already one of the names fully matched
-           if (data.length === 1 && data[0].name === formData.list) {
-             setRecommendations([]);
-           } else {
-             setRecommendations(data || []);
-           }
+           setRecommendations(data || []);
         }
       } catch (err) {
         console.error("Fetch recommendations error:", err);
