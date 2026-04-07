@@ -6,57 +6,37 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
 
-    // 1. Fetch most recent purchase orders by name
-    const recentPOs = await prisma.equipmentPurchaseOrder.findMany({
+    if (!search || search.length < 1) return NextResponse.json([]);
+
+    const results: any[] = [];
+
+    // 1. Fetch search-matched POs only (as requested by user)
+    const matchingPOs = await prisma.equipmentPurchaseOrder.findMany({
       where: {
         list: { contains: search, mode: 'insensitive' }
       },
       orderBy: { createdAt: 'desc' },
       select: {
+        id: true,
         list: true,
         detail: true,
         picture: true,
+        po_code: true
       },
       take: 100
     });
 
-    // 2. Clear duplicates, keep only unique and most recent
-    const recommendationsMap = new Map();
-    recentPOs.forEach(po => {
-      if (po.list && !recommendationsMap.has(po.list)) {
-        recommendationsMap.set(po.list, {
-          name: po.list,
-          detail: po.detail || "",
-          picture: po.picture || ""
-        });
-      }
+    matchingPOs.forEach(po => {
+      results.push({
+        id: po.id,
+        name: po.list || "Unnamed",
+        detail: po.detail || `PO: ${po.po_code || '-'}`,
+        picture: po.picture || "",
+        source: "Purchase Order"
+      });
     });
 
-    // 3. (Optional) Could also pull from inventory entries
-    const inventoryEntries = await prisma.equipmentEntryList.findMany({
-        where: {
-            list: { contains: search, mode: 'insensitive' }
-        },
-        orderBy: { createdAt: 'desc' },
-        select: {
-            list: true,
-        },
-        take: 50
-    });
-    
-    inventoryEntries.forEach(entry => {
-        if (entry.list && !recommendationsMap.has(entry.list)) {
-            recommendationsMap.set(entry.list, {
-                name: entry.list,
-                detail: "",
-                picture: ""
-            });
-        }
-    });
-
-    const result = Array.from(recommendationsMap.values());
-
-    return NextResponse.json(result);
+    return NextResponse.json(results);
   } catch (error) {
     console.error("GET recommendations error:", error);
     return NextResponse.json({ error: "Failed to fetch recommendations" }, { status: 500 });
