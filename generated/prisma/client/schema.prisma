@@ -365,3 +365,21 @@ model ItNoteDetail {
 
   @@map("it_note_details")
 }
+
+model Notification {
+  id      String  @id @default(cuid())
+  title   String
+  message String  @db.Text
+  type    String  @default("INFO") // INFO, TICKET, EQUIPMENT, ALERT
+  isRead  Boolean @default(false)
+  link    String? // Optional link to navigate when clicked
+
+  userId String? // If targeted at a specific user (e.g. an admin). If null, it's for all admins.
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("notifications")
+}

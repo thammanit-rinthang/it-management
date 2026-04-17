@@ -340,6 +340,18 @@ exports.Prisma.ItNoteDetailScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  message: 'message',
+  type: 'type',
+  isRead: 'isRead',
+  link: 'link',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -389,7 +401,8 @@ exports.Prisma.ModelName = {
   AssetHistory: 'AssetHistory',
   UserCredential: 'UserCredential',
   ItNote: 'ItNote',
-  ItNoteDetail: 'ItNoteDetail'
+  ItNoteDetail: 'ItNoteDetail',
+  Notification: 'Notification'
 };
 
 /**
